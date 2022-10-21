@@ -12,5 +12,4 @@ Nudge like tool to prompt users to update. See https://github.com/macadmins/nudg
 - Displays date update was released from Apple so uses know how far behind they are 
 - Grace period of 7 days after release to ensure people have a chance to update on their own
 - Displays if it is a major or minor update and (very roughly) estimates how long it will take
-- Has logic to run kickstart command if needed - Soon will have logic to delete softwareupdate plist for additional fixing
 - Coming Soon - Grace period after initial deployment 
