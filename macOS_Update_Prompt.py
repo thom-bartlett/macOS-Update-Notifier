@@ -86,7 +86,7 @@ def update_Type(latest):
     elif current_OS[0:1] != latest[0:1]:
         Update = "major"
         write_log(f"Current update is: {Update}")
-        time = "60+"
+        time = 60
     type = {"type": Update, "time": time, "current": current_OS}
     return type
 
