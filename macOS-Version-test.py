@@ -70,7 +70,7 @@ def update_Online():
     final_Date = posting_Date + datetime.timedelta(days=30)
     today = datetime.date.today()
     days_Left = int((final_Date.date() - today).days)
-    update_info = {"latest": macOS_Latest, "days_Left": days_Left, "posting": posting_Date_STR}
+    update_info = {"latest": macOS_Latest, "days_Left": days_Left, "posting": posting_Date}
     return update_info
     
 print (update_Online())

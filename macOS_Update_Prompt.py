@@ -13,10 +13,6 @@ import sys
 from packaging.version import Version
 import plistlib
 
-#To Do
-# Update main function with new logic for new update function
-# Update online check with new logic for macOS 13
-
 class DialogAlert:
     def __init__(self, message):
         # set the default look of the alert
@@ -105,7 +101,8 @@ def run_Time(postingDate, current_OS):
             plistlib.dump(plist, file)
 
 def update_Online():
-    majorOS = str(sys.argv[1])
+    # set to 4th param to work with Jamf
+    majorOS = str(sys.argv[4])
     URL = "https://gdmf.apple.com/v2/pmv"
     r = requests.get(URL, verify=False)
     list = r.json()
@@ -187,8 +184,7 @@ def main():
         os.remove(dialog_command_file)
     # check if dialog is installed and latest
     dialog_Check()
-    current_OS = "12.6"
-    #current_OS = platform.mac_ver()[0]
+    current_OS = platform.mac_ver()[0]
     latest_info = update_Online()
     if Version(current_OS) < Version(latest_info[0]):
         # Write to disk update info
