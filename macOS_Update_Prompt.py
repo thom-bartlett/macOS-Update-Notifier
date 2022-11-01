@@ -59,8 +59,12 @@ def run_Check(diff):
         write_log("Still in Update grace period... exiting... ")
         return 1, days_Left
     elif days_Left > 0 and diff < 2:
-        write_log("In regular update time frame... displaying dialog...")
-        return 2, days_Left
+        if lastRun.date() == today:
+            write_log("Already ran today... exiting...")
+            return 1
+        else:
+            write_log("In regular update time frame... displaying dialog...")
+            return 2, days_Left
     else:
         write_log("Deadline has passed... displaying dialog...")
         return 3, days_Left
@@ -102,7 +106,10 @@ def run_Time(postingDate, current_OS):
 
 def update_Online():
     # set to 4th param to work with Jamf
-    majorOS = str(sys.argv[4])
+    if (sys.argv[1]) == '/':
+        majorOS = str(sys.argv[4])
+    else:
+        majorOS = str(sys.argv[1])
     URL = "https://gdmf.apple.com/v2/pmv"
     r = requests.get(URL, verify=False)
     list = r.json()
@@ -148,7 +155,7 @@ def update_Type(latest, current_OS):
     return type
 
 def write_log(text):
-    """logger for depnotify"""
+    """logger for macOS Update"""
     NSLog("[mdm-switch] " + str(text))
 
 def update_Check():
@@ -184,7 +191,17 @@ def main():
         os.remove(dialog_command_file)
     # check if dialog is installed and latest
     dialog_Check()
-    current_OS = platform.mac_ver()[0]
+    # if second argument is debug thent he third argument can be used to set which OS we are testing
+    if (sys.argv[1]) == '/':
+        if sys.argv[5] == "debug":
+            current_OS = sys.argv[6]
+        else:
+            current_OS = platform.mac_ver()[0]
+    else:
+        if sys.argv[2] == "debug":
+            current_OS = sys.argv[3]
+        else:
+            current_OS = platform.mac_ver()[0]
     latest_info = update_Online()
     if Version(current_OS) < Version(latest_info[0]):
         # Write to disk update info
