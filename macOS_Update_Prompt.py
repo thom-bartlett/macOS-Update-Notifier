@@ -33,11 +33,11 @@ class DialogAlert:
     def __init__(self, message):
         # set the default look of the alert
         self.message = message
-        infolink="https://support.apple.com/en-au/HT201222"
+        infolink="https://support.apple.com/macos"
         self.content_dict = {
-            "alignment": "center",
+           # "alignment": "center",
             "button1text": "Update Now",
-            "bannerimage": "https://github.com/unfo33/venturewell-image/blob/main/update_logo_2.jpeg?raw=true",
+            "bannerimage": "https://github.com/unfo33/Public-scripts/blob/main/software_update-01%20(1).jpg?raw=true",
             "infobuttonaction": infolink,
             "infobuttontext": "More Info",
             "message": message,
@@ -45,7 +45,10 @@ class DialogAlert:
             "title": "none",
             "button2text": "Defer",
             "moveable": 1,
-            "ontop": 0
+            "ontop": 0,
+            "width": "1100",
+            "height": "510"
+
         }
 
     def alert(self, contentDict):
@@ -205,10 +208,14 @@ def update_Check():
             logger.warning(f"Timeout expired with error: {e}. Running kickstart...")
             subprocess.run(["launchctl", "kickstart", "-k", "system/com.apple.softwareupdated"])
 
-def build_Message(current, latest, release, type, time, left):
-    message =(f"## Your Update Path: **{current}** → **{latest}**\n\nmacOS **{latest}** was released on **{release}**.  "
-    f"It is a **{type}** update and will require around **{time}** minutes downtime.\n\nDays Remaining to Update: **{left}**\n\n"
-    f"To begin the update, click on **Update Now** and follow the provided steps.\n*You can also use the [Self Service app](jamfselfservice://content?entity=policy&id=97&action=view) to update at your convenience*.")
+def build_Message():
+    message =(f"### To learn how to update macOS follow the [macOS Upgrade Guide](https://docs.google.com/document/d/1qapEgeQXDAdAlMada6p6L7fmqxUWCECocHyA8GAqh3Q/edit?usp=sharing)\n\n"
+    "***\n\n"
+    f"### If you experience any issues, you can submit a ticket at with [WPromote Support](https://wpromote.happyfox.com/new/).\n\n"
+    "### Connect with IT:\n\nSupport Slack Channel: #it-help\n\nEmail: help@support.com\n\n"
+    "***\n\n"
+    "Please note that the update may take about an hour to first download and then install. Please update after business hours.\n\n"
+    "*Please save any critical business information on Google Drive prior to starting the upgrade in case your computer experiences an error during the process.")
     return message
 
 def main():
@@ -245,7 +252,7 @@ def main():
         if check[0] == 1:
             return
         elif check[0] == 2:
-            message = build_Message(current_OS, latest_info[0], release, type["type"], type["time"], check[1])
+            message = build_Message()
             mainDialog = DialogAlert(message)
             run_Main = mainDialog.alert(mainDialog.content_dict)
             if run_Main.returncode == 2:
@@ -256,7 +263,7 @@ def main():
                 logger.warning(f"Dialog closed with exit code: {run_Main}")
         else: 
             logger.warning("Update is past deadline")
-            message = build_Message(current_OS, latest_info[0], release, type["type"], type["time"], 0)
+            message = build_Message()
             finalDialog = DialogAlert(message + "\n\n**Notice: You have passed the deadline and this message will persist until you install the update and reboot**")
             finalDialog.content_dict["ontop"] = 1
             finalDialog.content_dict.pop("button2text")
