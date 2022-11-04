@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.github.wpromote.macupdate</string>
+	<key>LimitLoadToSessionType</key>
+	<array>
+		<string>Aqua</string>
+	</array>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Library/ManagedFrameworks/Python/Python3.framework/Versions/Current/bin/python3</string>
+		<string>/Library/Management/macOS_Update_Prompt.py</string>
+        <string>12</string>
+        <string>2022-11-01</string>
+        <string>debug</string>
+        <string>12.2.1</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StartInterval</key>
+    <integer>1800</integer>
+</dict>
+</plist>
