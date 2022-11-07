@@ -8,12 +8,13 @@ import os
 import json
 import subprocess
 from os.path import exists
-from Foundation import NSLog
+from Foundation import NSLog, NSBundle
 import sys
 from packaging.version import Version
 import plistlib
 import logging
 from logging.handlers import RotatingFileHandler
+from SystemConfiguration import SCDynamicStoreCopyConsoleUser
 
 # Settings logs to file if not from Jamf, for Jamf its better to have them report back to Jamf
 if sys.argv[1] == '/':
@@ -32,12 +33,19 @@ Plist = "/Library/Management/update.plist"
 class DialogAlert:
     def __init__(self, message):
         # set the default look of the alert
+        if is_dark_mode():
+            bannerimage = "/Library/Management/software_update-light.jpg"
+            print ("dark mode")
+        else:
+            print ("light mode")
+            bannerimage = "/Library/Management/software_update-dark.jpg"
+
         self.message = message
         infolink="https://support.apple.com/macos"
         self.content_dict = {
            # "alignment": "center",
             "button1text": "Update Now",
-            "bannerimage": "https://github.com/unfo33/Public-scripts/blob/main/software_update-01%20(1).jpg?raw=true",
+            "bannerimage": bannerimage,
             "infobuttonaction": infolink,
             "infobuttontext": "More Info",
             "message": message,
@@ -75,6 +83,17 @@ def read_Plist():
     else:
         logger.warning("No Plist detected...")
         return
+
+def is_dark_mode():
+    appearanceBundle = NSBundle.bundleWithPath_(
+        "/System/Library/PreferencePanes/Appearance.prefPane"
+    )
+    appearanceShared = appearanceBundle.classNamed_("AppearanceShared")
+    app = appearanceShared.sharedAppearanceAccess()
+    if app.theme() == 1:
+        return False
+    else:
+        return True
 
 def update_Plist(today, current_OS, final_Date=0):
     """Update Plist and create if necessary"""
