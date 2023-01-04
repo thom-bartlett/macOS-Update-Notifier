@@ -8,7 +8,7 @@ import os
 import json
 import subprocess
 from os.path import exists
-from Foundation import NSLog
+from Foundation import NSLog, NSBundle
 import sys
 from packaging.version import Version
 import plistlib
@@ -18,6 +18,7 @@ from logging.handlers import RotatingFileHandler
 # Settings logs to file if not from Jamf, for Jamf its better to have them report back to Jamf
 if sys.argv[1] == '/':
     logging.basicConfig(format='%(asctime)s - %(message)s')
+    logger = logging.getLogger("Rotating Log")
 else:
     logging.basicConfig(filename='/Library/management/update.log', format='%(asctime)s - %(message)s')
     # add a rotating handler
@@ -73,7 +74,7 @@ def read_Plist():
         logger.warning("No Plist detected...")
         return
 
-def update_Plist(today, current_OS, final_Date=0):
+def update_Plist(today, current_OS, latest_OS, final_Date=0):
     """Update Plist and create if necessary"""
     update_Dir = "/Library/Management"
     if os.path.exists(Plist):
@@ -95,43 +96,48 @@ def update_Plist(today, current_OS, final_Date=0):
            "create-time": today,
            "last-run": today,
            "current_OS": current_OS,
+           "latest_OS": latest_OS,
            "deadline": final_Date
         }
-        days_Left = int((final_Date.date() - today.date()).days)
+        #days_Left = int((final_Date.date() - today.date()).days)
         with open(Plist, 'wb') as file:
             plistlib.dump(properties, file)
 
-def run_Check(diff, postingDate, current_OS, update_Type, major_OS_Deadline):
+def run_Check(diff, postingDate, current_OS, update_Type, major_OS_Deadline, latest_OS):
     """Check if a dialog needs to be displayed"""
     today = datetime.datetime.today()
     final_Date = postingDate + datetime.timedelta(days=30)
+    logger.warning(f"Final date: {final_Date}")
     ran_Today = False
-    if read_Plist():
-        plist_Value = read_Plist()
-        lastRun = plist_Value["last-run"]
-        deadline = plist_Value["deadline"]
-        if lastRun.date() == today.date():
-            ran_Today = True
-    else:
-        lastRun = today
-        deadline = final_Date
-    if update_Type == "Major":
-        deadline = major_OS_Deadline
-    days_Left = int((deadline.date() - today.date()).days)
-    update_Plist(today, current_OS, deadline)
-    if days_Left > 23 and diff < 2:
-        logger.warning("Still in Update grace period... exiting... ")
-        return 1, days_Left
-    elif days_Left > 0 and diff < 2:
-        if ran_Today:
-            logger.warning("Already ran today... exiting...")
-            return 1, days_Left
+    if Version(current_OS) != Version(latest_OS):
+        if read_Plist():
+            plist_Value = read_Plist()
+            lastRun = plist_Value["last-run"]
+            deadline = plist_Value["deadline"]
+            if lastRun.date() == today.date():
+                ran_Today = True
         else:
-            logger.warning("In regular update time frame... displaying dialog...")
-            return 2, days_Left
+            lastRun = today
+            deadline = final_Date
+        if update_Type == "Major":
+            deadline = major_OS_Deadline
+        days_Left = int((deadline.date() - today.date()).days)
+        update_Plist(today, current_OS, latest_OS, deadline)
+        if days_Left > 30 and diff < 2:
+            logger.warning("Still in Update grace period... exiting... ")
+            return 1, days_Left
+        elif days_Left > 0 and diff < 2:
+            if ran_Today:
+                logger.warning("Already ran today... exiting...")
+                return 1, days_Left
+            else:
+                logger.warning("In regular update time frame... displaying dialog...")
+                return 2, days_Left
+        else:
+            logger.warning("Deadline has passed... displaying dialog...")
+            return 3, days_Left
     else:
-        logger.warning("Deadline has passed... displaying dialog...")
-        return 3, days_Left
+        update_Plist(today, current_OS, latest_OS, final_Date)
 
 def get_Latest_Update():
     """Download latest update info from Apple website"""
@@ -174,12 +180,12 @@ def update_Type(latest, current_OS):
         else:
             logger.warning("Feature version change detected")
             Update = "feature"
-            time = 40
+            time = 30
             diff = diff + latest.minor - current.minor + latest.micro
     else:
         logger.warning("Major version change detected")
         Update = "Major"
-        time = 60
+        time = 40
         diff = diff + latest.major - current.major
     type = {"type": Update, "time": time, "current": current_OS, "diff": diff}
     logger.warning(f"Update type details: {type}")
@@ -241,7 +247,7 @@ def main():
         # check whether update is minor, major, etc and how many updates behind we are
         type = update_Type(latest_info[0], current_OS)
         # check when update was run last and determine if it needs to be displayed
-        check = run_Check(type["diff"], latest_info[1], current_OS, type["type"], major_OS_Deadline)
+        check = run_Check(type["diff"], latest_info[1], current_OS, type["type"], major_OS_Deadline, latest_info[0])
         if check[0] == 1:
             return
         elif check[0] == 2:
@@ -268,6 +274,7 @@ def main():
             else:
                 logger.warning(f"Dialog closed with exit code: {run_Final}")
     else:
+        run_Check(type["diff"], latest_info[1], current_OS, type["type"], major_OS_Deadline, latest_info[0])
         logger.warning("No update needed... exiting...")
 
 main()
